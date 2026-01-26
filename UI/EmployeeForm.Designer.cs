@@ -9,6 +9,8 @@
         private System.Windows.Forms.Button btnDelete;
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Button btnSearch;
+        // Khai báo nút xuất excel
+        private System.Windows.Forms.Button btnExport;
 
         protected override void Dispose(bool disposing)
         {
@@ -27,6 +29,7 @@
             this.btnDelete = new System.Windows.Forms.Button();
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.btnSearch = new System.Windows.Forms.Button();
+            this.btnExport = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvEmployees)).BeginInit();
             this.SuspendLayout();
             // 
@@ -79,9 +82,20 @@
             this.btnSearch.Text = "Tìm";
             this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
             // 
+            // btnExport
+            // 
+            this.btnExport.Location = new System.Drawing.Point(644, 12);
+            this.btnExport.Name = "btnExport";
+            this.btnExport.Size = new System.Drawing.Size(94, 29);
+            this.btnExport.TabIndex = 6;
+            this.btnExport.Text = "Xuất Excel";
+            this.btnExport.UseVisualStyleBackColor = true;
+            this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
+            // 
             // EmployeeForm
             // 
             this.ClientSize = new System.Drawing.Size(784, 431);
+            this.Controls.Add(this.btnExport);
             this.Controls.Add(this.btnSearch);
             this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.btnDelete);

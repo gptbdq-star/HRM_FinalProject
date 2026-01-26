@@ -122,4 +122,37 @@ public partial class EmployeeForm : Form
             }
         }
     }
+    private void btnExport_Click(object sender, EventArgs e)
+    {
+        using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "CSV File|*.csv", FileName = "DanhSachNhanVien.csv" })
+        {
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    using (System.IO.StreamWriter sw = new System.IO.StreamWriter(sfd.FileName, false, System.Text.Encoding.UTF8))
+                    {
+                        // 1. Viết tiêu đề (Header)
+                        sw.WriteLine("Mã NV,Họ Tên,Email,SĐT,Phòng Ban,Chức Vụ,Ngày Sinh");
+
+                        // 2. Lấy dữ liệu từ GridView (để xuất đúng những gì đang nhìn thấy, kể cả khi đang tìm kiếm)
+                        // Hoặc lấy từ Database: var list = _employeeService.GetAll();
+
+                        var list = _employeeService.GetAll();
+                        foreach (var emp in list)
+                        {
+                            // Xử lý dữ liệu: Bọc ngoặc kép nếu có dấu phẩy để tránh lỗi cột
+                            string line = $"{emp.EmployeeCode},\"{emp.FullName}\",{emp.Email},{emp.Phone},\"{emp.Department?.DepartmentName}\",\"{emp.Position?.PositionName}\",{emp.DateOfBirth:dd/MM/yyyy}";
+                            sw.WriteLine(line);
+                        }
+                    }
+                    MessageBox.Show("Xuất file thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi khi lưu file: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+    }
 }

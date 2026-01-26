@@ -78,19 +78,22 @@ public partial class MainForm : Form
         }
     }
 
-    // --- Giữ nguyên hàm SwitchForm ---
     private void SwitchForm<T>() where T : Form
     {
-        // Đóng tất cả form cũ
+        // 1. Đóng hết form cũ
         foreach (var child in this.MdiChildren)
         {
             child.Close();
         }
 
-        // Mở form mới
+        // 2. Mở form mới
         var newForm = _serviceProvider.GetRequiredService<T>();
         newForm.MdiParent = this;
+
+        // --- QUAN TRỌNG: Dòng này giúp form con lấp đầy form cha, không bị chồng chéo ---
         newForm.Dock = DockStyle.Fill;
+        newForm.FormBorderStyle = FormBorderStyle.None; // (Tùy chọn) Bỏ viền để nhìn liền mạch hơn
+
         newForm.Show();
     }
 

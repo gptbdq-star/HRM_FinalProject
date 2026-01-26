@@ -10,7 +10,7 @@ public partial class EmployeeEditForm : Form
 {
     private readonly IEmployeeService _employeeService;
     private readonly IUnitOfWork _unitOfWork;
-    private Employee? _employee;
+    private Employee? _employee; // Thêm dấu ? để báo hiệu có thể null
 
     public EmployeeEditForm(
         IEmployeeService employeeService,
@@ -22,11 +22,14 @@ public partial class EmployeeEditForm : Form
         _employee = employee;
 
         InitializeComponent();
+
         LoadCombobox();
-        LoadData();
+        LoadData(); // Load dữ liệu lên trước khi validate
 
         HookRealtimeValidation();
-        btnSave.Enabled = false;
+
+        // Kiểm tra validate lần đầu nhưng KHÔNG hiện lỗi đỏ ngay (để form sạch đẹp)
+        btnSave.Enabled = ValidateSilent(showError: false);
     }
 
     private void LoadCombobox()
@@ -38,23 +41,38 @@ public partial class EmployeeEditForm : Form
         cboPosition.DataSource = _unitOfWork.Positions.GetAll();
         cboPosition.DisplayMember = "PositionName";
         cboPosition.ValueMember = "Id";
+
+        // Reset về trạng thái chưa chọn
+        cboDepartment.SelectedIndex = -1;
+        cboPosition.SelectedIndex = -1;
     }
 
     private void LoadData()
     {
         if (_employee == null) return;
 
-        txtCode.Text = _employee.EmployeeCode;
-        txtName.Text = _employee.FullName;
-        txtEmail.Text = _employee.Email;
-        txtPhone.Text = _employee.Phone;
+        // Dùng toán tử ?? "" để tránh lỗi nếu dữ liệu trong DB bị null
+        txtCode.Text = _employee.EmployeeCode ?? "";
+        txtName.Text = _employee.FullName ?? "";
+        txtEmail.Text = _employee.Email ?? "";
+        txtPhone.Text = _employee.Phone ?? "";
+
+        // [QUAN TRỌNG] Load ngày sinh từ object lên control
+        dtpDob.Value = _employee.DateOfBirth;
 
         cboDepartment.SelectedValue = _employee.DepartmentId;
         cboPosition.SelectedValue = _employee.PositionId;
+
+        // Nếu là sửa thì khóa ô Mã NV
+        txtCode.Enabled = false;
     }
 
     private void HookRealtimeValidation()
     {
+        // [ĐÃ SỬA] Thêm bắt sự kiện cho txtCode và dtpDob
+        txtCode.TextChanged += InputChanged;
+        dtpDob.ValueChanged += InputChanged;
+
         txtName.TextChanged += InputChanged;
         txtEmail.TextChanged += InputChanged;
         txtPhone.TextChanged += InputChanged;
@@ -64,19 +82,25 @@ public partial class EmployeeEditForm : Form
 
     private void InputChanged(object? sender, EventArgs e)
     {
-        btnSave.Enabled = ValidateSilent();
+        // Khi người dùng nhập thì mới hiện lỗi đỏ
+        btnSave.Enabled = ValidateSilent(showError: true);
     }
 
-    private bool ValidateSilent()
+    // Thêm tham số showError để kiểm soát việc hiện lỗi
+    private bool ValidateSilent(bool showError)
     {
         try
         {
             var temp = new Employee
             {
+                EmployeeCode = txtCode.Text.Trim(),
                 FullName = txtName.Text.Trim(),
                 Email = txtEmail.Text.Trim(),
                 Phone = txtPhone.Text.Trim(),
-                DateOfBirth = new DateTime(2000, 1, 1),
+
+                // [ĐÃ SỬA] Lấy ngày sinh thực tế từ giao diện
+                DateOfBirth = dtpDob.Value,
+
                 DepartmentId = cboDepartment.SelectedValue != null
                     ? (int)cboDepartment.SelectedValue
                     : 0,
@@ -86,12 +110,15 @@ public partial class EmployeeEditForm : Form
             };
 
             EmployeeValidator.Validate(temp);
+
+            // Nếu validate đúng thì xóa lỗi
             errorProvider1.Clear();
             return true;
         }
         catch (Exception ex)
         {
-            ShowValidationError(ex.Message);
+            // Chỉ hiện lỗi nếu cần thiết
+            if (showError) ShowValidationError(ex.Message);
             return false;
         }
     }
@@ -99,36 +126,39 @@ public partial class EmployeeEditForm : Form
     private void ShowValidationError(string message)
     {
         errorProvider1.Clear();
-        if (message.Contains("Mã nhân viên"))
-            errorProvider1.SetError(txtCode, message);
-        else if (message.Contains("Tên"))
-            errorProvider1.SetError(txtName, message);
-        else if (message.Contains("Email"))
-            errorProvider1.SetError(txtEmail, message);
-        else if (message.Contains("Số điện thoại"))
-            errorProvider1.SetError(txtPhone, message);
-        else if (message.Contains("phòng ban"))
-            errorProvider1.SetError(cboDepartment, message);
-        else if (message.Contains("chức vụ"))
-            errorProvider1.SetError(cboPosition, message);
-        else
-            MessageBox.Show(message);
+
+        // Bỏ qua lỗi Mã NV nếu đang ở chế độ Sửa (đã bị disable)
+        if (!txtCode.Enabled && message.Contains("Mã nhân viên")) return;
+
+        if (message.Contains("Mã nhân viên")) errorProvider1.SetError(txtCode, message);
+        else if (message.Contains("Tên")) errorProvider1.SetError(txtName, message);
+        else if (message.Contains("Email")) errorProvider1.SetError(txtEmail, message);
+        else if (message.Contains("Số điện thoại")) errorProvider1.SetError(txtPhone, message);
+        else if (message.Contains("tuổi") || message.Contains("Ngày sinh")) errorProvider1.SetError(dtpDob, message);
+        else if (message.Contains("phòng ban")) errorProvider1.SetError(cboDepartment, message);
+        else if (message.Contains("chức vụ")) errorProvider1.SetError(cboPosition, message);
+        else MessageBox.Show(message);
     }
 
     private void btnSave_Click(object sender, EventArgs e)
     {
         try
         {
-            if (_employee == null)
-                _employee = new Employee();
+            if (_employee == null) _employee = new Employee();
 
             _employee.EmployeeCode = txtCode.Text.Trim();
             _employee.FullName = txtName.Text.Trim();
             _employee.Email = txtEmail.Text.Trim();
             _employee.Phone = txtPhone.Text.Trim();
-            _employee.DateOfBirth = new DateTime(2000, 1, 1);
-            _employee.DepartmentId = (int)cboDepartment.SelectedValue;
-            _employee.PositionId = (int)cboPosition.SelectedValue;
+
+            // [ĐÃ SỬA] Lưu ngày sinh đúng
+            _employee.DateOfBirth = dtpDob.Value;
+
+            if (cboDepartment.SelectedValue != null)
+                _employee.DepartmentId = (int)cboDepartment.SelectedValue;
+
+            if (cboPosition.SelectedValue != null)
+                _employee.PositionId = (int)cboPosition.SelectedValue;
 
             if (_employee.Id == 0)
                 _employeeService.Create(_employee);
@@ -139,7 +169,7 @@ public partial class EmployeeEditForm : Form
         }
         catch (Exception ex)
         {
-            ShowValidationError(ex.Message);
+            MessageBox.Show(ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
