@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows.Forms;
 using Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using Domain.Entities;
 
 namespace UI;
 
@@ -15,35 +16,27 @@ public partial class MainForm : Form
     {
         _serviceProvider = serviceProvider;
         _unitOfWork = unitOfWork;
+
         InitializeComponent();
 
+        // Thiết lập Form cha (MDI)
         this.IsMdiContainer = true;
 
-        // --- ĐOẠN MỚI: Đăng ký sự kiện để ẩn/hiện Dashboard ---
+        // Đăng ký sự kiện ẩn/hiện Dashboard khi mở form con
         this.MdiChildActivate += MainForm_MdiChildActivate;
 
         LoadDashboardStats();
     }
 
-    // --- HÀM MỚI: Tự động ẩn hiện Dashboard ---
     private void MainForm_MdiChildActivate(object? sender, EventArgs e)
     {
-        // Tìm cái GroupBox thống kê theo tên chúng ta đã đặt
         if (this.Controls.ContainsKey("grpStats"))
         {
             var grpStats = this.Controls["grpStats"];
+            // Nếu có Form con đang mở -> Ẩn Dashboard. Nếu không -> Hiện lại.
+            grpStats.Visible = (this.ActiveMdiChild == null);
 
-            if (this.ActiveMdiChild != null)
-            {
-                // Nếu đang có Form con mở -> Ẩn thống kê đi cho đỡ rối
-                grpStats.Visible = false;
-            }
-            else
-            {
-                // Nếu không có Form con nào (về trang chủ) -> Hiện thống kê và Load lại số liệu mới
-                grpStats.Visible = true;
-                LoadDashboardStats(); // Load lại số liệu mới nhất luôn
-            }
+            if (grpStats.Visible) LoadDashboardStats();
         }
     }
 
@@ -51,80 +44,46 @@ public partial class MainForm : Form
     {
         try
         {
-            // Logic lấy số liệu (Giữ nguyên như bạn đã làm)
             int empCount = _unitOfWork.Employees.GetAll().Count();
             int deptCount = _unitOfWork.Departments.GetAll().Count();
 
-            int currentMonth = DateTime.Now.Month;
-            int currentYear = DateTime.Now.Year;
+            int month = DateTime.Now.Month;
+            int year = DateTime.Now.Year;
 
             var payslips = _unitOfWork.Payslips.GetAll()
-                .Where(x => x.Month == currentMonth && x.Year == currentYear);
-
-            decimal totalSalary = payslips.Sum(x => x.FinalSalary);
+                .Where(x => x.Month == month && x.Year == year);
+            decimal totalSalary = payslips.Any() ? payslips.Sum(x => x.FinalSalary) : 0;
 
             if (this.Controls.ContainsKey("grpStats"))
             {
                 var grp = this.Controls["grpStats"];
-                // Tìm Label bên trong GroupBox (Sử dụng Find dệ quy hoặc Controls index)
                 grp.Controls["lblStatEmployee"].Text = $"👥 Nhân sự: {empCount}";
                 grp.Controls["lblStatDept"].Text = $"🏢 Phòng ban: {deptCount}";
-                grp.Controls["lblStatSalary"].Text = $"💰 Lương T{currentMonth}: {totalSalary:N0} đ";
+                grp.Controls["lblStatSalary"].Text = $"💰 Lương T{month}: {totalSalary:N0} đ";
             }
         }
-        catch (Exception)
-        {
-            // Bỏ qua lỗi nếu chưa load xong UI
-        }
+        catch { /* Bỏ qua lỗi khi DB chưa sẵn sàng */ }
     }
 
     private void SwitchForm<T>() where T : Form
     {
-        // 1. Đóng hết form cũ
-        foreach (var child in this.MdiChildren)
-        {
-            child.Close();
-        }
+        // Đóng form cũ
+        foreach (var child in this.MdiChildren) child.Close();
 
-        // 2. Mở form mới
+        // Mở form mới từ DI Container
         var newForm = _serviceProvider.GetRequiredService<T>();
         newForm.MdiParent = this;
-
-        // --- QUAN TRỌNG: Dòng này giúp form con lấp đầy form cha, không bị chồng chéo ---
         newForm.Dock = DockStyle.Fill;
-        newForm.FormBorderStyle = FormBorderStyle.None; // (Tùy chọn) Bỏ viền để nhìn liền mạch hơn
-
+        newForm.FormBorderStyle = FormBorderStyle.None;
         newForm.Show();
     }
 
-    // --- CÁC MENU EVENT (Giữ nguyên) ---
-    private void menuEmployee_Click(object sender, EventArgs e)
-    {
-        SwitchForm<EmployeeForm>();
-    }
-
-    private void menuDepartment_Click(object sender, EventArgs e)
-    {
-        SwitchForm<DepartmentForm>();
-    }
-
-    private void menuPosition_Click(object sender, EventArgs e)
-    {
-        SwitchForm<PositionForm>();
-    }
-
-    private void menuTimesheet_Click(object sender, EventArgs e)
-    {
-        SwitchForm<TimesheetForm>();
-    }
-
-    private void menuPayroll_Click(object sender, EventArgs e)
-    {
-        SwitchForm<PayrollForm>();
-    }
-
-    private void menuExit_Click(object sender, EventArgs e)
-    {
-        Close();
-    }
+    // --- Sự kiện Menu ---
+    private void menuEmployee_Click(object sender, EventArgs e) => SwitchForm<EmployeeForm>();
+    private void menuLaborContract_Click(object sender, EventArgs e) => SwitchForm<LaborContractForm>();
+    private void menuDepartment_Click(object sender, EventArgs e) => SwitchForm<DepartmentForm>();
+    private void menuPosition_Click(object sender, EventArgs e) => SwitchForm<PositionForm>();
+    private void menuTimesheet_Click(object sender, EventArgs e) => SwitchForm<TimesheetForm>();
+    private void menuPayroll_Click(object sender, EventArgs e) => SwitchForm<PayrollForm>();
+    private void menuExit_Click(object sender, EventArgs e) => Close();
 }

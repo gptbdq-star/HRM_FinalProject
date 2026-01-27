@@ -43,6 +43,10 @@ services.AddScoped<ITimesheetService, TimesheetService>();
 services.AddTransient<TimesheetForm>();
 services.AddScoped<IPayrollService, PayrollService>();
 services.AddTransient<PayrollForm>();
+// Trong file Program.cs, tìm đoạn đăng ký các Form và thêm:
+services.AddScoped<ILaborContractService, LaborContractService>(); // Service
+services.AddTransient<LaborContractForm>();      // Form danh sách
+services.AddTransient<LaborContractEditForm>();  // Form thêm/sửa
 // Auth
 services.AddScoped<IAuthService, AuthService>();
 

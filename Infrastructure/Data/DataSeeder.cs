@@ -143,6 +143,27 @@ public static class DataSeeder
                 };
                 context.Timesheets.Add(ts);
             }
+            context.LaborContracts.Add(new LaborContract
+            {
+                ContractNumber = "HD-001", // Khớp với Entity
+                EmployeeId = emp1.Id,
+                StartDate = DateTime.Now.AddYears(-1),
+                EndDate = DateTime.Now.AddYears(1),
+                BasicSalary = 30000000,
+                ContractType = "Chính thức", // Khớp với Entity
+                Status = "Active"
+            });
+
+            context.LaborContracts.Add(new LaborContract
+            {
+                ContractNumber = "HD-002",
+                EmployeeId = emp2.Id,
+                StartDate = DateTime.Now.AddMonths(-6),
+                EndDate = DateTime.Now.AddYears(1),
+                BasicSalary = 15000000,
+                ContractType = "Thử việc",
+                Status = "Active"
+            });
         }
 
         context.SaveChanges();

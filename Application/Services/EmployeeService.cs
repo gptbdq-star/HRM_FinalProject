@@ -10,6 +10,7 @@ public class EmployeeService : IEmployeeService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly EmployeeBusinessValidator _businessValidator;
+
     public EmployeeService(IUnitOfWork unitOfWork, EmployeeBusinessValidator businessValidator)
     {
         _unitOfWork = unitOfWork;
@@ -25,20 +26,35 @@ public class EmployeeService : IEmployeeService
     {
         return _unitOfWork.Employees.GetById(id);
     }
-    public IEnumerable<Employee> Search(string keyword)
+
+    public IEnumerable<Employee> Search(string keyword, int? departmentId, int? positionId)
     {
         var query = _unitOfWork.Employees.GetAll();
 
-        if (string.IsNullOrWhiteSpace(keyword))
+        // 1. Lọc theo từ khóa (Tên, Mã, SĐT)
+        if (!string.IsNullOrWhiteSpace(keyword))
         {
-            return query;
+            keyword = keyword.ToLower().Trim();
+            query = query.Where(x =>
+                x.FullName.ToLower().Contains(keyword) ||
+                x.EmployeeCode.ToLower().Contains(keyword) ||
+                x.Phone.Contains(keyword)
+            );
         }
-        keyword = keyword.ToLower().Trim();
-        return query.Where(x =>
-            x.FullName.ToLower().Contains(keyword) ||
-            x.EmployeeCode.ToLower().Contains(keyword) ||
-            x.Phone.Contains(keyword)
-        );
+
+        // 2. Lọc theo Phòng ban
+        if (departmentId.HasValue && departmentId.Value > 0)
+        {
+            query = query.Where(x => x.DepartmentId == departmentId.Value);
+        }
+
+        // 3. Lọc theo Chức vụ
+        if (positionId.HasValue && positionId.Value > 0)
+        {
+            query = query.Where(x => x.PositionId == positionId.Value);
+        }
+
+        return query.ToList();
     }
 
     public void Create(Employee employee)
