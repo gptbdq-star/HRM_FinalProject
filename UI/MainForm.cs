@@ -77,6 +77,10 @@ public partial class MainForm : Form
         newForm.FormBorderStyle = FormBorderStyle.None;
         newForm.Show();
     }
+    private void menuRewardDiscipline_Click(object sender, EventArgs e)
+    {
+        SwitchForm<RewardDisciplineForm>();
+    }
 
     // --- Sự kiện Menu ---
     private void menuEmployee_Click(object sender, EventArgs e) => SwitchForm<EmployeeForm>();

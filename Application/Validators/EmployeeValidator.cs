@@ -9,12 +9,6 @@ public static class EmployeeValidator
     public static void Validate(Employee e)
     {
         // 1. Validate Mã NV
-        if (string.IsNullOrWhiteSpace(e.EmployeeCode))
-            throw new Exception("Mã nhân viên không được để trống");
-
-        if (e.EmployeeCode.Trim().Length < 3)
-            throw new Exception("Mã nhân viên phải từ 3 ký tự trở lên");
-
         // 2. Validate Tên NV
         if (string.IsNullOrWhiteSpace(e.FullName))
             throw new Exception("Tên nhân viên không được để trống");

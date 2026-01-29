@@ -1,22 +1,25 @@
 ﻿using Application.Interfaces;
+using Application.Validators;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Application.Services;
 
 public class LaborContractService : ILaborContractService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly LaborContractBusinessValidator _businessValidator;
 
-    public LaborContractService(IUnitOfWork unitOfWork)
+    public LaborContractService(IUnitOfWork unitOfWork, LaborContractBusinessValidator businessValidator)
     {
         _unitOfWork = unitOfWork;
+        _businessValidator = businessValidator;
     }
 
     public IEnumerable<LaborContract> GetAll()
     {
-        // Trả về toàn bộ hợp đồng, UnitOfWork sẽ tự động Include thông tin Employee nếu bạn cấu hình Repository đúng
         return _unitOfWork.LaborContracts.GetAll();
     }
 
@@ -27,15 +30,21 @@ public class LaborContractService : ILaborContractService
 
     public void Create(LaborContract contract)
     {
-        // Logic nghiệp vụ: Ngày kết thúc phải sau ngày bắt đầu
-        if (contract.EndDate <= contract.StartDate)
-        {
-            throw new Exception("Ngày kết thúc hợp đồng phải sau ngày bắt đầu.");
-        }
+        LaborContractValidator.Validate(contract);
 
-        if (contract.BasicSalary < 0)
+        contract.ContractNumber = GenerateContractNumber();
+        contract.Status = "Active";
+
+        _businessValidator.ValidateForCreate(contract);
+
+        var oldContracts = _unitOfWork.LaborContracts.GetAll()
+            .Where(c => c.EmployeeId == contract.EmployeeId && c.Status == "Active")
+            .ToList();
+
+        foreach (var old in oldContracts)
         {
-            throw new Exception("Lương cơ bản không được nhỏ hơn 0.");
+            old.Status = "Expired";
+            _unitOfWork.LaborContracts.Update(old);
         }
 
         _unitOfWork.LaborContracts.Add(contract);
@@ -44,13 +53,7 @@ public class LaborContractService : ILaborContractService
 
     public void Update(LaborContract contract)
     {
-        var existing = _unitOfWork.LaborContracts.GetById(contract.Id);
-        if (existing == null) throw new Exception("Không tìm thấy hợp đồng để cập nhật.");
-
-        if (contract.EndDate <= contract.StartDate)
-        {
-            throw new Exception("Ngày kết thúc hợp đồng phải sau ngày bắt đầu.");
-        }
+        LaborContractValidator.Validate(contract);
 
         _unitOfWork.LaborContracts.Update(contract);
         _unitOfWork.Save();
@@ -64,5 +67,24 @@ public class LaborContractService : ILaborContractService
             _unitOfWork.LaborContracts.Delete(contract);
             _unitOfWork.Save();
         }
+    }
+
+    private string GenerateContractNumber()
+    {
+        var lastCode = _unitOfWork.LaborContracts.GetAll()
+            .Where(c => c.ContractNumber.StartsWith("HD"))
+            .Select(c => c.ContractNumber)
+            .OrderByDescending(c => c)
+            .FirstOrDefault();
+
+        int next = 1;
+
+        if (!string.IsNullOrEmpty(lastCode))
+        {
+            int.TryParse(lastCode.Substring(2), out next);
+            next++;
+        }
+
+        return $"HD{next.ToString("D3")}";
     }
 }

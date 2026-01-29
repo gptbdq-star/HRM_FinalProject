@@ -17,14 +17,13 @@ public class TimesheetService : ITimesheetService
 
     public string CheckIn(int employeeId)
     {
-        var employee = _unitOfWork.Employees.GetById(employeeId);
-        if (employee == null) return "Không tìm thấy nhân viên";
+        var today = DateTime.Today;
 
-        var today = DateTime.Now.Date;
         var exists = _unitOfWork.Timesheets.GetAll()
             .FirstOrDefault(x => x.EmployeeId == employeeId && x.Date == today);
 
-        if (exists != null) return "Nhân viên đã Check-in hôm nay rồi";
+        if (exists != null)
+            return "Nhân viên đã Check-in hôm nay";
 
         var timesheet = new Timesheet
         {
@@ -37,39 +36,51 @@ public class TimesheetService : ITimesheetService
         _unitOfWork.Timesheets.Add(timesheet);
         _unitOfWork.Save();
 
-        return $"Check-in thành công lúc {DateTime.Now:HH:mm:ss}";
+        return "Check-in thành công";
     }
 
     public string CheckOut(int employeeId)
     {
-        var today = DateTime.Now.Date;
+        var today = DateTime.Today;
+
         var timesheet = _unitOfWork.Timesheets.GetAll()
             .FirstOrDefault(x => x.EmployeeId == employeeId && x.Date == today);
 
-        if (timesheet == null) return "Chưa Check-in, không thể Check-out";
+        if (timesheet == null)
+            return "Chưa Check-in hôm nay";
 
         timesheet.CheckOutTime = DateTime.Now.TimeOfDay;
 
-        if (DateTime.Now.Hour < 17) timesheet.Status += " - Về sớm";
+        if (DateTime.Now.Hour < 17)
+            timesheet.Status = timesheet.Status + " - Về sớm";
 
         _unitOfWork.Timesheets.Update(timesheet);
         _unitOfWork.Save();
 
-        return $"Check-out thành công lúc {DateTime.Now:HH:mm:ss}";
+        return "Check-out thành công";
     }
 
-    public IEnumerable<Timesheet> GetHistory(int employeeId)
+    public IEnumerable<Timesheet> GetByEmployeeMonth(int employeeId, int month, int year)
     {
         return _unitOfWork.Timesheets.GetAll()
-            .Where(x => x.EmployeeId == employeeId)
-            .OrderByDescending(x => x.Date);
+            .Where(x =>
+                x.EmployeeId == employeeId &&
+                x.Date.Month == month &&
+                x.Date.Year == year)
+            .ToList();
     }
 
-    public IEnumerable<Timesheet> GetTodayList()
+    public IEnumerable<Timesheet> GetByDate(DateTime date)
     {
-        var today = DateTime.Now.Date;
         return _unitOfWork.Timesheets.GetAll()
-            .Where(x => x.Date == today)
-            .OrderByDescending(x => x.CheckInTime);
+            .Where(x => x.Date == date.Date)
+            .ToList();
     }
+    public IEnumerable<Timesheet> GetByRange(DateTime from, DateTime to)
+    {
+        return _unitOfWork.Timesheets.GetAll()
+            .Where(x => x.Date.Date >= from && x.Date.Date <= to)
+            .ToList();
+    }
+
 }

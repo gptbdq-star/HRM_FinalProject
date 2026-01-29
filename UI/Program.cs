@@ -50,6 +50,10 @@ services.AddTransient<LaborContractEditForm>();  // Form thêm/sửa
 // Auth
 services.AddScoped<IAuthService, AuthService>();
 
+services.AddScoped<LaborContractBusinessValidator>();
+services.AddScoped<IRewardDisciplineService, RewardDisciplineService>();
+services.AddTransient<RewardDisciplineForm>();
+services.AddTransient<RewardDisciplineEditForm>();
 
 // =========================
 // 3️⃣ UI layer (Forms)

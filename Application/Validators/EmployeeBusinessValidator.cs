@@ -1,5 +1,7 @@
 ﻿using Application.Interfaces;
 using Domain.Entities;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Application.Validators;
 
@@ -12,18 +14,47 @@ public class EmployeeBusinessValidator
         _unitOfWork = unitOfWork;
     }
 
-    public void Validate(Employee employee)
+    public void ValidateForCreate(Employee employee)
     {
-        if (_unitOfWork.Employees.Any(
-            x => x.EmployeeCode == employee.EmployeeCode && x.Id != employee.Id))
-            throw new Exception("Mã nhân viên đã tồn tại");
+        ValidateEmployeeCode(employee.EmployeeCode);
 
-        if (_unitOfWork.Employees.Any(
-            x => x.Email == employee.Email && x.Id != employee.Id))
-            throw new Exception("Email đã tồn tại");
+        bool codeExists = _unitOfWork.Employees.Any(e =>
+            e.EmployeeCode == employee.EmployeeCode);
 
-        if (_unitOfWork.Employees.Any(
-            x => x.Phone == employee.Phone && x.Id != employee.Id))
-            throw new Exception("Số điện thoại đã tồn tại");
+        if (codeExists)
+            throw new Exception("Mã nhân viên đã tồn tại.");
+
+        ValidateCommon(employee, isCreate: true);
+    }
+
+    public void ValidateForUpdate(Employee employee)
+    {
+        ValidateCommon(employee, isCreate: false);
+    }
+
+    private void ValidateEmployeeCode(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            throw new Exception("Mã nhân viên không hợp lệ.");
+
+        if (!Regex.IsMatch(code, @"^NV\d{3}$"))
+            throw new Exception("Mã nhân viên phải theo định dạng NV001.");
+    }
+
+    private void ValidateCommon(Employee employee, bool isCreate)
+    {
+        bool emailExists = _unitOfWork.Employees.Any(e =>
+            e.Email == employee.Email &&
+            e.Id != employee.Id);
+
+        if (emailExists)
+            throw new Exception("Email đã tồn tại.");
+
+        bool phoneExists = _unitOfWork.Employees.Any(e =>
+            e.Phone == employee.Phone &&
+            e.Id != employee.Id);
+
+        if (phoneExists)
+            throw new Exception("Số điện thoại đã tồn tại.");
     }
 }

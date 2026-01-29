@@ -8,6 +8,8 @@ namespace UI;
 
 public partial class EmployeeEditForm : Form
 {
+    private readonly bool _isCreateMode;
+
     private readonly IEmployeeService _employeeService;
     private readonly IUnitOfWork _unitOfWork;
     private Employee? _employee; // Thêm dấu ? để báo hiệu có thể null
@@ -20,6 +22,7 @@ public partial class EmployeeEditForm : Form
         _employeeService = employeeService;
         _unitOfWork = unitOfWork;
         _employee = employee;
+        _isCreateMode = employee == null;
 
         InitializeComponent();
 
@@ -49,6 +52,9 @@ public partial class EmployeeEditForm : Form
 
     private void LoadData()
     {
+        txtCode.ReadOnly = true;
+        txtCode.TabStop = false;
+
         if (_employee == null) return;
 
         // Dùng toán tử ?? "" để tránh lỗi nếu dữ liệu trong DB bị null
@@ -93,21 +99,20 @@ public partial class EmployeeEditForm : Form
         {
             var temp = new Employee
             {
-                EmployeeCode = txtCode.Text.Trim(),
+                EmployeeCode = _employee == null
+        ? "NV000"               // mã giả hợp lệ cho validation
+        : txtCode.Text.Trim(),  // khi sửa thì dùng mã thật
+
                 FullName = txtName.Text.Trim(),
                 Email = txtEmail.Text.Trim(),
                 Phone = txtPhone.Text.Trim(),
 
-                // [ĐÃ SỬA] Lấy ngày sinh thực tế từ giao diện
                 DateOfBirth = dtpDob.Value,
 
-                DepartmentId = cboDepartment.SelectedValue != null
-                    ? (int)cboDepartment.SelectedValue
-                    : 0,
-                PositionId = cboPosition.SelectedValue != null
-                    ? (int)cboPosition.SelectedValue
-                    : 0
+                DepartmentId = cboDepartment.SelectedValue != null? (int)cboDepartment.SelectedValue: 0,
+                PositionId = cboPosition.SelectedValue != null? (int)cboPosition.SelectedValue: 0
             };
+
 
             EmployeeValidator.Validate(temp);
 
@@ -144,14 +149,12 @@ public partial class EmployeeEditForm : Form
     {
         try
         {
-            if (_employee == null) _employee = new Employee();
+            if (_employee == null)
+                _employee = new Employee(); // OK, vì _isCreateMode đã cố định
 
-            _employee.EmployeeCode = txtCode.Text.Trim();
             _employee.FullName = txtName.Text.Trim();
             _employee.Email = txtEmail.Text.Trim();
             _employee.Phone = txtPhone.Text.Trim();
-
-            // [ĐÃ SỬA] Lưu ngày sinh đúng
             _employee.DateOfBirth = dtpDob.Value;
 
             if (cboDepartment.SelectedValue != null)
@@ -160,7 +163,7 @@ public partial class EmployeeEditForm : Form
             if (cboPosition.SelectedValue != null)
                 _employee.PositionId = (int)cboPosition.SelectedValue;
 
-            if (_employee.Id == 0)
+            if (_isCreateMode)
                 _employeeService.Create(_employee);
             else
                 _employeeService.Update(_employee);

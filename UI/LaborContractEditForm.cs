@@ -10,16 +10,22 @@ public partial class LaborContractEditForm : Form
 {
     private readonly ILaborContractService _contractService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly bool _isCreateMode;
     private LaborContract? _contract;
 
-    public LaborContractEditForm(ILaborContractService contractService, IUnitOfWork unitOfWork, LaborContract? contract = null)
+    public LaborContractEditForm(
+        ILaborContractService contractService,
+        IUnitOfWork unitOfWork,
+        LaborContract? contract = null)
     {
         _contractService = contractService;
         _unitOfWork = unitOfWork;
         _contract = contract;
+        _isCreateMode = contract == null;
+
         InitializeComponent();
         LoadEmployees();
-        if (_contract != null) LoadData();
+        LoadData();
     }
 
     private void LoadEmployees()
@@ -32,8 +38,16 @@ public partial class LaborContractEditForm : Form
 
     private void LoadData()
     {
-        if (_contract == null) return;
-        txtCode.Text = _contract.ContractNumber;
+        txtCode.ReadOnly = true;
+        txtCode.TabStop = false;
+
+        if (_isCreateMode)
+        {
+            txtCode.Text = "(Tự động sinh)";
+            return;
+        }
+
+        txtCode.Text = _contract!.ContractNumber;
         txtSalary.Text = _contract.BasicSalary.ToString();
         dtpStart.Value = _contract.StartDate;
         dtpEnd.Value = _contract.EndDate;
@@ -44,38 +58,32 @@ public partial class LaborContractEditForm : Form
     {
         try
         {
-            // Kiểm tra null cho ComboBox
             if (cboEmployee.SelectedValue == null)
-            {
-                MessageBox.Show("Vui lòng chọn nhân viên!");
-                return;
-            }
+                throw new Exception("Vui lòng chọn nhân viên.");
 
             var item = _contract ?? new LaborContract();
 
-            // SỬA TẠI ĐÂY: Dùng ContractNumber thay vì ContractCode
-            item.ContractNumber = txtCode.Text.Trim();
             item.ContractType = "Chính thức";
-
-            item.EmployeeId = (int)cboEmployee.SelectedValue!; // Dấu ! để khẳng định không null
+            item.EmployeeId = (int)cboEmployee.SelectedValue;
             item.BasicSalary = decimal.Parse(txtSalary.Text);
             item.StartDate = dtpStart.Value;
             item.EndDate = dtpEnd.Value;
-            item.Status = "Active";
 
-            if (item.Id == 0) _contractService.Create(item);
-            else _contractService.Update(item);
+            if (_isCreateMode)
+                _contractService.Create(item);
+            else
+                _contractService.Update(item);
 
-            this.DialogResult = DialogResult.OK;
+            DialogResult = DialogResult.OK;
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Lỗi: " + ex.Message);
+            MessageBox.Show(ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
     {
-        this.Close();
+        DialogResult = DialogResult.Cancel;
     }
 }

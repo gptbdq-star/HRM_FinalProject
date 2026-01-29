@@ -59,17 +59,50 @@ public class EmployeeService : IEmployeeService
 
     public void Create(Employee employee)
     {
+        // 1️⃣ Validate dữ liệu người dùng (KHÔNG bao gồm EmployeeCode)
         EmployeeValidator.Validate(employee);
-        _businessValidator.Validate(employee);
 
+        // 2️⃣ Sinh mã nhân viên
+        employee.EmployeeCode = GenerateEmployeeCode();
+
+        // 3️⃣ Validate nghiệp vụ (code + trùng)
+        _businessValidator.ValidateForCreate(employee);
+
+        // 4️⃣ Lưu
         _unitOfWork.Employees.Add(employee);
         _unitOfWork.Save();
     }
 
+    private string GenerateEmployeeCode()
+    {
+        // Lấy mã NV lớn nhất hiện tại (NV001, NV002, ...)
+        var lastCode = _unitOfWork.Employees.GetAll()
+            .Where(e => e.EmployeeCode.StartsWith("NV"))
+            .Select(e => e.EmployeeCode)
+            .OrderByDescending(code => code)
+            .FirstOrDefault();
+
+        int nextNumber = 1;
+
+        if (!string.IsNullOrEmpty(lastCode))
+        {
+            // NV001 -> 1
+            var numberPart = lastCode.Substring(2);
+            int.TryParse(numberPart, out nextNumber);
+            nextNumber++;
+        }
+
+        return $"NV{nextNumber.ToString("D3")}";
+    }
+
+
     public void Update(Employee employee)
     {
+        // 1️⃣ Validate dữ liệu người dùng
         EmployeeValidator.Validate(employee);
-        _businessValidator.Validate(employee);
+
+        // 2️⃣ Validate nghiệp vụ cho Update (email trùng, v.v.)
+        _businessValidator.ValidateForUpdate(employee);
 
         _unitOfWork.Employees.Update(employee);
         _unitOfWork.Save();
