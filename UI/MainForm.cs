@@ -27,18 +27,30 @@ public partial class MainForm : Form
     {
         var p = Session.Permissions;
 
-        menuEmployee.Visible = p.Contains("MENU_EMPLOYEE");
+        // ===== MENU CATEGORY =====
         menuDepartment.Visible = p.Contains("MENU_DEPARTMENT");
         menuPosition.Visible = p.Contains("MENU_POSITION");
-        menuTimesheet.Visible = p.Contains("MENU_TIMESHEET");
-        menuPayroll.Visible = p.Contains("MENU_PAYROLL");
+
+        menuCategory.Visible =
+            menuDepartment.Visible ||
+            menuPosition.Visible;
+
+        // ===== MENU HUMAN =====
+        menuEmployee.Visible = p.Contains("MENU_EMPLOYEE");
+        menuLaborContract.Visible = p.Contains("MENU_CONTRACT") || p.Contains("MENU_EMPLOYEE");
         menuRewardDiscipline.Visible = p.Contains("MENU_REWARD");
-        menuUser.Visible = p.Contains("MENU_USER");
 
         menuHuman.Visible =
             menuEmployee.Visible ||
+            menuLaborContract.Visible ||
             menuRewardDiscipline.Visible;
+
+        // ===== MENU KHÁC =====
+        menuTimesheet.Visible = p.Contains("MENU_TIMESHEET");
+        menuPayroll.Visible = p.Contains("MENU_PAYROLL");
+        menuUser.Visible = p.Contains("MENU_USER");
     }
+
 
 
 

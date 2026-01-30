@@ -14,7 +14,8 @@ public class AuthService : IAuthService
     }
     public User? Login(string username, string password)
     {
-        var user = _unitOfWork.Users.GetAll()
+        var user = _unitOfWork.Users
+            .GetAll()
             .Where(u => u.Username == username)
             .Select(u => new User
             {
@@ -22,14 +23,32 @@ public class AuthService : IAuthService
                 Username = u.Username,
                 PasswordHash = u.PasswordHash,
                 RoleId = u.RoleId,
-                Role = u.Role
+                Role = u.Role == null ? null : new Role
+                {
+                    Id = u.Role.Id,
+                    Name = u.Role.Name,
+                    RolePermissions = u.Role.RolePermissions
+                        .Select(rp => new RolePermission
+                        {
+                            Permission = new Permission
+                            {
+                                Code = rp.Permission.Code
+                            }
+                        }).ToList()
+                }
             })
             .FirstOrDefault();
 
-        if (user == null) return null;
-        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash)) return null;
+        if (user == null)
+            return null;
+
+        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            return null;
 
         return user;
     }
+
+
+
 
 }
