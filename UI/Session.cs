@@ -6,9 +6,16 @@ public static class Session
 {
     public static User? CurrentUser { get; set; }
 
-    public static HashSet<string> Permissions =>
-        CurrentUser?.Role.RolePermissions
-            .Select(rp => rp.Permission.Code)
-            .ToHashSet()
-        ?? new HashSet<string>();
+    public static HashSet<string> Permissions
+    {
+        get
+        {
+            if (CurrentUser?.Role == null)
+                return new HashSet<string>();
+
+            return CurrentUser.Role.RolePermissions
+                .Select(rp => rp.Permission.Code)
+                .ToHashSet();
+        }
+    }
 }

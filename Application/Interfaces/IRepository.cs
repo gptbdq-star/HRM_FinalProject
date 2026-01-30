@@ -12,4 +12,6 @@ public interface IRepository<T> where T : class
     void Delete(T entity);
 
     bool Any(Expression<Func<T, bool>> predicate);
+    IQueryable<T> Query();
+
 }

@@ -25,7 +25,8 @@ public class UnitOfWork : IUnitOfWork
         WorkShifts = new Repository<WorkShift>(_context);
         Timesheets = new Repository<Timesheet>(_context);
         Payslips = new Repository<Payslip>(_context);
-        RewardDiscipline = new Repository<RewardDiscipline>(_context);
+
+        RewardDisciplines = new Repository<RewardDiscipline>(_context);
     }
 
     public IRepository<Employee> Employees { get; }
@@ -40,8 +41,8 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<LaborContract> LaborContracts { get; }
     public IRepository<WorkShift> WorkShifts { get; }
     public IRepository<Timesheet> Timesheets { get; }
-    public IRepository<Payslip> Payslips { get; }
     public IRepository<RewardDiscipline> RewardDisciplines { get; }
+    public IRepository<Payslip> Payslips { get; }
 
     public int Save() => _context.SaveChanges();
 }

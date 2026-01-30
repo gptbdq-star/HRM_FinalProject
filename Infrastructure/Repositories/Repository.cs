@@ -45,4 +45,9 @@ public class Repository<T> : IRepository<T> where T : class
     {
         return _dbSet.Any(predicate);
     }
+    public IQueryable<T> Query()
+    {
+        return _dbSet.AsQueryable();
+    }
+
 }
