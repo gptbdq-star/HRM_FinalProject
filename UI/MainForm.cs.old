@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Windows.Forms;
 using Application.Interfaces;
@@ -17,66 +17,41 @@ public partial class MainForm : Form
         _unitOfWork = unitOfWork;
 
         InitializeComponent();
-        
-        // ✅ GỌI LOAD EVENT
+
+        // ✅ FIX: Gọi ApplyPermission trong Load event thay vì constructor
         this.Load += MainForm_Load;
-        this.MdiChildActivate += MainForm_MdiChildActivate;
+        MdiChildActivate += MainForm_MdiChildActivate;
     }
 
+    // ✅ THÊM FORM LOAD EVENT
     private void MainForm_Load(object? sender, EventArgs e)
     {
-        // ✅ ĐẢM BẢO SESSION ĐÃ READY
+        // Lúc này Session.CurrentUser đã được set đầy đủ
         ApplyPermission();
         DebugPermissions();
         LoadDashboardStats();
-        
-        // ✅ FORCE REFRESH
-        this.menuStrip1.Refresh();
     }
 
     private void ApplyPermission()
     {
-        try
-        {
-            var p = Session.Permissions;
-            
-            // ✅ LOG RA XEM CÓ PERMISSIONS KHÔNG
-            System.Diagnostics.Debug.WriteLine($"[ApplyPermission] Permissions count: {p.Count}");
-            System.Diagnostics.Debug.WriteLine($"[ApplyPermission] Permissions: {string.Join(", ", p)}");
+        var p = Session.Permissions;
 
-            // ===== SET SUB-MENU VISIBILITY =====
-            bool hasDept = p.Contains("MENU_DEPARTMENT");
-            bool hasPos = p.Contains("MENU_POSITION");
-            bool hasEmp = p.Contains("MENU_EMPLOYEE");
-            bool hasReward = p.Contains("MENU_REWARD");
-            
-            menuDepartment.Visible = hasDept;
-            menuPosition.Visible = hasPos;
-            menuEmployee.Visible = hasEmp;
-            menuLaborContract.Visible = hasEmp;
-            menuRewardDiscipline.Visible = hasReward;
-            
-            // ===== SET PARENT MENU VISIBILITY =====
-            menuCategory.Visible = hasDept || hasPos;
-            menuHuman.Visible = hasEmp || hasReward;
-            
-            // ===== SET STANDALONE MENU =====
-            menuTimesheet.Visible = p.Contains("MENU_TIMESHEET");
-            menuPayroll.Visible = p.Contains("MENU_PAYROLL");
-            menuUser.Visible = p.Contains("MENU_USER");
-            
-            // ✅ LOG KẾT QUẢ
-            System.Diagnostics.Debug.WriteLine($"[ApplyPermission] menuCategory.Visible = {menuCategory.Visible}");
-            System.Diagnostics.Debug.WriteLine($"[ApplyPermission] menuHuman.Visible = {menuHuman.Visible}");
-            
-            // ✅ FORCE UPDATE UI
-            this.menuStrip1.Invalidate();
-            this.menuStrip1.Update();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Error in ApplyPermission: {ex.Message}\n\n{ex.StackTrace}");
-        }
+        // ===== SUB-MENU ITEMS =====
+        menuDepartment.Visible = p.Contains("MENU_DEPARTMENT");
+        menuPosition.Visible = p.Contains("MENU_POSITION");
+
+        menuEmployee.Visible = p.Contains("MENU_EMPLOYEE");
+        menuLaborContract.Visible = p.Contains("MENU_EMPLOYEE");
+        menuRewardDiscipline.Visible = p.Contains("MENU_REWARD");
+
+        // ===== TOP-LEVEL MENU (PARENT) =====
+        menuCategory.Visible = menuDepartment.Visible || menuPosition.Visible;
+        menuHuman.Visible = menuEmployee.Visible || menuLaborContract.Visible || menuRewardDiscipline.Visible;
+
+        // ===== STANDALONE MENUS =====
+        menuTimesheet.Visible = p.Contains("MENU_TIMESHEET");
+        menuPayroll.Visible = p.Contains("MENU_PAYROLL");
+        menuUser.Visible = p.Contains("MENU_USER");
     }
 
     private void MainForm_MdiChildActivate(object? sender, EventArgs e)
@@ -141,7 +116,6 @@ public partial class MainForm : Form
                 $"Username: {user?.Username}\n" +
                 $"Role: {user?.Role?.Name}\n" +
                 $"Permissions count: {perms.Count}\n\n" +
-                $"Permissions:\n{string.Join("\n", perms)}\n\n" +
                 $"--- MENU VISIBILITY ---\n" +
                 $"menuCategory.Visible = {menuCategory.Visible}\n" +
                 $"  ├─ menuDepartment.Visible = {menuDepartment.Visible}\n" +
@@ -153,16 +127,16 @@ public partial class MainForm : Form
                 $"menuTimesheet.Visible = {menuTimesheet.Visible}\n" +
                 $"menuPayroll.Visible = {menuPayroll.Visible}\n" +
                 $"menuUser.Visible = {menuUser.Visible}\n\n" +
-                $"--- IN MENUSTRIP? ---\n" +
-                $"Total items: {menuStrip1.Items.Count}\n" +
-                $"menuCategory in strip? {menuStrip1.Items.Contains(menuCategory)}\n" +
-                $"menuHuman in strip? {menuStrip1.Items.Contains(menuHuman)}";
+                $"--- MENU IN MENUSTRIP? ---\n" +
+                $"Total items in MenuStrip: {menuStrip1.Items.Count}\n" +
+                $"menuCategory in MenuStrip? {menuStrip1.Items.Contains(menuCategory)}\n" +
+                $"menuHuman in MenuStrip? {menuStrip1.Items.Contains(menuHuman)}";
 
             MessageBox.Show(debugMsg, "Debug Menu", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Debug Error: {ex.Message}\n\n{ex.StackTrace}");
+            MessageBox.Show($"Error: {ex.Message}");
         }
     }
 

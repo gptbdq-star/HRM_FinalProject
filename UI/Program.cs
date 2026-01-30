@@ -62,7 +62,6 @@ services.AddTransient<RewardDisciplineEditForm>();
 // =========================
 
 services.AddTransient<LoginForm>();
-services.AddTransient<MainForm>();
 
 services.AddTransient<EmployeeForm>();
 services.AddTransient<EmployeeEditForm>();
@@ -72,6 +71,8 @@ services.AddTransient<DepartmentEditForm>();
 
 services.AddTransient<PositionForm>();
 services.AddTransient<PositionEditForm>();
+
+services.AddTransient<MainForm>();
 
 
 // =========================

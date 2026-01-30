@@ -12,43 +12,23 @@ public class AuthService : IAuthService
     {
         _unitOfWork = unitOfWork;
     }
+
     public User? Login(string username, string password)
     {
+        // ✅ FIX: Dùng Query() hoặc GetQueryable() thay vì GetAll()
+        // Query() trả về IQueryable nên Include() sẽ work
         var user = _unitOfWork.Users
-            .GetAll()
-            .Where(u => u.Username == username)
-            .Select(u => new User
-            {
-                Id = u.Id,
-                Username = u.Username,
-                PasswordHash = u.PasswordHash,
-                RoleId = u.RoleId,
-                Role = u.Role == null ? null : new Role
-                {
-                    Id = u.Role.Id,
-                    Name = u.Role.Name,
-                    RolePermissions = u.Role.RolePermissions
-                        .Select(rp => new RolePermission
-                        {
-                            Permission = new Permission
-                            {
-                                Code = rp.Permission.Code
-                            }
-                        }).ToList()
-                }
-            })
-            .FirstOrDefault();
+            .Query()  // hoặc .GetQueryable()
+            .Include(u => u.Role)
+                .ThenInclude(r => r!.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
+            .FirstOrDefault(u => u.Username == username);
 
-        if (user == null)
-            return null;
+        if (user == null) return null;
 
         if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             return null;
 
         return user;
     }
-
-
-
-
 }

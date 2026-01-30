@@ -49,5 +49,9 @@ public class Repository<T> : IRepository<T> where T : class
     {
         return _dbSet.AsQueryable();
     }
+    public IQueryable<T> GetQueryable()
+    {
+        return _dbSet.AsQueryable();
+    }
 
 }

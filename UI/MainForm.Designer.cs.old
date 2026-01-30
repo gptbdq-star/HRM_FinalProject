@@ -1,0 +1,143 @@
+namespace UI
+{
+    partial class MainForm
+    {
+        private System.ComponentModel.IContainer components = null;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+
+        private System.Windows.Forms.ToolStripMenuItem menuSystem;
+        private System.Windows.Forms.ToolStripMenuItem menuExit;
+
+        private System.Windows.Forms.ToolStripMenuItem menuCategory;
+        private System.Windows.Forms.ToolStripMenuItem menuDepartment;
+        private System.Windows.Forms.ToolStripMenuItem menuPosition;
+
+        private System.Windows.Forms.ToolStripMenuItem menuHuman;
+        private System.Windows.Forms.ToolStripMenuItem menuEmployee;
+        private System.Windows.Forms.ToolStripMenuItem menuLaborContract;
+        private System.Windows.Forms.ToolStripMenuItem menuRewardDiscipline;
+
+        private System.Windows.Forms.ToolStripMenuItem menuTimesheet;
+        private System.Windows.Forms.ToolStripMenuItem menuPayroll;
+        private System.Windows.Forms.ToolStripMenuItem menuUser;
+
+        private System.Windows.Forms.GroupBox grpStats;
+        private System.Windows.Forms.Label lblStatEmployee;
+        private System.Windows.Forms.Label lblStatDept;
+        private System.Windows.Forms.Label lblStatSalary;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && components != null)
+                components.Dispose();
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+
+            this.menuSystem = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuExit = new System.Windows.Forms.ToolStripMenuItem();
+
+            this.menuCategory = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuDepartment = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuPosition = new System.Windows.Forms.ToolStripMenuItem();
+
+            this.menuHuman = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuEmployee = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuLaborContract = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuRewardDiscipline = new System.Windows.Forms.ToolStripMenuItem();
+
+            this.menuTimesheet = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuPayroll = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuUser = new System.Windows.Forms.ToolStripMenuItem();
+
+            this.grpStats = new System.Windows.Forms.GroupBox();
+            this.lblStatEmployee = new System.Windows.Forms.Label();
+            this.lblStatDept = new System.Windows.Forms.Label();
+            this.lblStatSalary = new System.Windows.Forms.Label();
+
+            // ===== MenuStrip =====
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[]
+            {
+                this.menuSystem,
+                this.menuCategory,
+                this.menuHuman,
+                this.menuTimesheet,
+                this.menuPayroll,
+                this.menuUser
+            });
+
+            // ===== System =====
+            this.menuSystem.Text = "Hệ thống";
+            this.menuSystem.DropDownItems.Add(this.menuExit);
+
+            this.menuExit.Text = "Thoát";
+            this.menuExit.Click += new System.EventHandler(this.menuExit_Click);
+
+            // ===== Category =====
+            this.menuCategory.Text = "Danh mục";
+            this.menuCategory.DropDownItems.AddRange(new[]
+            {
+                this.menuDepartment,
+                this.menuPosition
+            });
+
+            this.menuDepartment.Text = "Phòng ban";
+            this.menuDepartment.Click += new System.EventHandler(this.menuDepartment_Click);
+
+            this.menuPosition.Text = "Chức vụ";
+            this.menuPosition.Click += new System.EventHandler(this.menuPosition_Click);
+
+            // ===== Human =====
+            this.menuHuman.Text = "Nhân sự";
+            this.menuHuman.DropDownItems.AddRange(new[]
+            {
+                this.menuEmployee,
+                this.menuLaborContract,
+                this.menuRewardDiscipline
+            });
+
+            this.menuEmployee.Text = "Danh sách nhân viên";
+            this.menuEmployee.Click += new System.EventHandler(this.menuEmployee_Click);
+
+            this.menuLaborContract.Text = "Hợp đồng lao động";
+            this.menuLaborContract.Click += new System.EventHandler(this.menuLaborContract_Click);
+
+            this.menuRewardDiscipline.Text = "Thưởng / Kỷ luật";
+            this.menuRewardDiscipline.Click += new System.EventHandler(this.menuRewardDiscipline_Click);
+
+            // ===== Others =====
+            this.menuTimesheet.Text = "Chấm công";
+            this.menuTimesheet.Click += new System.EventHandler(this.menuTimesheet_Click);
+
+            this.menuPayroll.Text = "Tiền lương";
+            this.menuPayroll.Click += new System.EventHandler(this.menuPayroll_Click);
+
+            this.menuUser.Text = "Quản lý tài khoản";
+            this.menuUser.Click += new System.EventHandler(this.menuUser_Click);
+
+            // ===== Dashboard =====
+            this.grpStats.Text = "Bảng điều khiển";
+            this.grpStats.SetBounds(12, 40, 760, 100);
+
+            this.lblStatEmployee.SetBounds(20, 40, 200, 30);
+            this.lblStatDept.SetBounds(260, 40, 200, 30);
+            this.lblStatSalary.SetBounds(500, 40, 240, 30);
+
+            this.grpStats.Controls.Add(this.lblStatEmployee);
+            this.grpStats.Controls.Add(this.lblStatDept);
+            this.grpStats.Controls.Add(this.lblStatSalary);
+
+            // ===== Form =====
+            this.Controls.Add(this.grpStats);
+            this.Controls.Add(this.menuStrip1);
+
+            this.MainMenuStrip = this.menuStrip1;
+            this.Text = "Hệ thống quản trị nhân sự - HRM";
+            this.ClientSize = new System.Drawing.Size(800, 500);
+            this.IsMdiContainer = true;
+        }
+    }
+}
