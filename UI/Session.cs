@@ -1,4 +1,6 @@
 ﻿using Domain.Entities;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UI;
 
@@ -19,5 +21,9 @@ public static class Session
         }
     }
 
+    // ✅ DÙNG CHO ĐĂNG XUẤT
+    public static void Clear()
+    {
+        CurrentUser = null;
+    }
 }
-

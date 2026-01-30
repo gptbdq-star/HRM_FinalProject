@@ -51,6 +51,7 @@ services.AddTransient<LaborContractEditForm>();  // Form thêm/sửa
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<UserForm>();
 
+services.AddTransient<ChangePasswordForm>();
 
 services.AddScoped<LaborContractBusinessValidator>();
 services.AddScoped<IRewardDisciplineService, RewardDisciplineService>();
@@ -103,13 +104,29 @@ using (var scope = serviceProvider.CreateScope())
 // 5️⃣ Start WinForms app
 // =========================
 
+// =========================
+// 5️⃣ Start WinForms app
+// =========================
+
 ApplicationConfiguration.Initialize();
 
-var loginForm = serviceProvider.GetRequiredService<LoginForm>();
-if (loginForm.ShowDialog() != DialogResult.OK)
-    return;
+while (true)
+{
+    // 🔐 LOGIN
+    var loginForm = serviceProvider.GetRequiredService<LoginForm>();
+    var loginResult = loginForm.ShowDialog();
 
-Session.CurrentUser = loginForm.LoggedInUser;
+    if (loginResult != DialogResult.OK)
+        break; // Thoát app nếu không login
 
-var mainForm = serviceProvider.GetRequiredService<MainForm>();
-System.Windows.Forms.Application.Run(mainForm);
+    // ✅ SET SESSION
+    Session.CurrentUser = loginForm.LoggedInUser;
+
+    // 🏠 MAIN FORM
+    var mainForm = serviceProvider.GetRequiredService<MainForm>();
+    System.Windows.Forms.Application.Run(mainForm);
+
+    // 👉 Khi MainForm.Close() (Logout) → quay lại Login
+    Session.Clear();
+}
+

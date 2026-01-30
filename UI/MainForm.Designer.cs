@@ -65,8 +65,14 @@ namespace UI
             // 
             // menuSystem
             // 
+            this.menuChangePassword = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuLogout = new System.Windows.Forms.ToolStripMenuItem();
+
             this.menuSystem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.menuExit});
+    this.menuChangePassword,
+    this.menuLogout,
+    this.menuExit});
+
             this.menuSystem.Name = "menuSystem";
             this.menuSystem.Size = new System.Drawing.Size(69, 20);
             this.menuSystem.Text = "Hệ thống";
@@ -210,6 +216,22 @@ namespace UI
             this.grpStats.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
+            // 
+            // menuChangePassword
+            // 
+            this.menuChangePassword.Name = "menuChangePassword";
+            this.menuChangePassword.Size = new System.Drawing.Size(180, 22);
+            this.menuChangePassword.Text = "Đổi mật khẩu";
+            this.menuChangePassword.Click += new System.EventHandler(this.menuChangePassword_Click);
+
+            // 
+            // menuLogout
+            // 
+            this.menuLogout.Name = "menuLogout";
+            this.menuLogout.Size = new System.Drawing.Size(180, 22);
+            this.menuLogout.Text = "Đăng xuất";
+            this.menuLogout.Click += new System.EventHandler(this.menuLogout_Click);
+
         }
 
         #endregion
@@ -231,5 +253,8 @@ namespace UI
         private System.Windows.Forms.Label lblStatEmployee;
         private System.Windows.Forms.Label lblStatDept;
         private System.Windows.Forms.Label lblStatSalary;
+        private System.Windows.Forms.ToolStripMenuItem menuChangePassword;
+        private System.Windows.Forms.ToolStripMenuItem menuLogout;
+
     }
 }

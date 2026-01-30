@@ -164,7 +164,28 @@ public partial class MainForm : Form
         {
             MessageBox.Show($"Debug Error: {ex.Message}\n\n{ex.StackTrace}");
         }
+
     }
+    private void menuLogout_Click(object sender, EventArgs e)
+    {
+        var confirm = MessageBox.Show(
+            "Bạn có chắc chắn muốn đăng xuất?",
+            "Đăng xuất",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirm != DialogResult.Yes) return;
+
+        this.Close(); // ✅ Program.cs sẽ xử lý phần còn lại
+    }
+
+
+    private void menuChangePassword_Click(object sender, EventArgs e)
+    {
+        var frm = _serviceProvider.GetRequiredService<ChangePasswordForm>();
+        frm.ShowDialog();
+    }
+
 
     private void menuEmployee_Click(object sender, EventArgs e) => SwitchForm<EmployeeForm>();
     private void menuLaborContract_Click(object sender, EventArgs e) => SwitchForm<LaborContractForm>();
