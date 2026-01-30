@@ -1,6 +1,5 @@
-﻿using Domain.Entities;
-
-namespace Application.Interfaces;
+﻿using Application.Interfaces;
+using Domain.Entities;
 
 public interface IUnitOfWork
 {
@@ -8,11 +7,14 @@ public interface IUnitOfWork
     IRepository<Department> Departments { get; }
     IRepository<Position> Positions { get; }
     IRepository<User> Users { get; }
+
+    IRepository<Role> Roles { get; }
+    IRepository<Permission> Permissions { get; }
+    IRepository<RolePermission> RolePermissions { get; }
+
     IRepository<LaborContract> LaborContracts { get; }
     IRepository<WorkShift> WorkShifts { get; }
     IRepository<Timesheet> Timesheets { get; }
-    IRepository<LeaveType> LeaveTypes { get; }
-    IRepository<LeaveRequest> LeaveRequests { get; }
     IRepository<RewardDiscipline> RewardDisciplines { get; }
     IRepository<Payslip> Payslips { get; }
 

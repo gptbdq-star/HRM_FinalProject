@@ -49,6 +49,8 @@ services.AddTransient<LaborContractForm>();      // Form danh sách
 services.AddTransient<LaborContractEditForm>();  // Form thêm/sửa
 // Auth
 services.AddScoped<IAuthService, AuthService>();
+services.AddScoped<UserForm>();
+
 
 services.AddScoped<LaborContractBusinessValidator>();
 services.AddScoped<IRewardDisciplineService, RewardDisciplineService>();

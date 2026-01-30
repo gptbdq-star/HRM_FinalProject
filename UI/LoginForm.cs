@@ -28,8 +28,9 @@ public partial class LoginForm : Form
             MessageBox.Show("Sai tài khoản hoặc mật khẩu");
             return;
         }
-
         LoggedInUser = user;
+        Session.CurrentUser = user;
         DialogResult = DialogResult.OK;
     }
+
 }

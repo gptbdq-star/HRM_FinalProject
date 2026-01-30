@@ -1,7 +1,6 @@
 ﻿using Application.Interfaces;
-using Application.Validators;
 using Domain.Entities;
-using System.Collections.Generic;
+using BCrypt.Net;
 using System.Linq;
 
 namespace Application.Services;
@@ -9,12 +8,10 @@ namespace Application.Services;
 public class EmployeeService : IEmployeeService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly EmployeeBusinessValidator _businessValidator;
 
-    public EmployeeService(IUnitOfWork unitOfWork, EmployeeBusinessValidator businessValidator)
+    public EmployeeService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _businessValidator = businessValidator;
     }
 
     public IEnumerable<Employee> GetAll()
@@ -29,92 +26,84 @@ public class EmployeeService : IEmployeeService
 
     public IEnumerable<Employee> Search(string keyword, int? departmentId, int? positionId)
     {
-        var query = _unitOfWork.Employees.GetAll();
+        var query = _unitOfWork.Employees.GetAll().AsQueryable();
 
-        // 1. Lọc theo từ khóa (Tên, Mã, SĐT)
         if (!string.IsNullOrWhiteSpace(keyword))
         {
-            keyword = keyword.ToLower().Trim();
+            keyword = keyword.Trim().ToLower();
             query = query.Where(x =>
-                x.FullName.ToLower().Contains(keyword) ||
                 x.EmployeeCode.ToLower().Contains(keyword) ||
-                x.Phone.Contains(keyword)
-            );
+                x.FullName.ToLower().Contains(keyword) ||
+                x.Phone.Contains(keyword));
         }
 
-        // 2. Lọc theo Phòng ban
-        if (departmentId.HasValue && departmentId.Value > 0)
-        {
-            query = query.Where(x => x.DepartmentId == departmentId.Value);
-        }
+        if (departmentId.HasValue && departmentId > 0)
+            query = query.Where(x => x.DepartmentId == departmentId);
 
-        // 3. Lọc theo Chức vụ
-        if (positionId.HasValue && positionId.Value > 0)
-        {
-            query = query.Where(x => x.PositionId == positionId.Value);
-        }
+        if (positionId.HasValue && positionId > 0)
+            query = query.Where(x => x.PositionId == positionId);
 
         return query.ToList();
     }
 
     public void Create(Employee employee)
     {
-        // 1️⃣ Validate dữ liệu người dùng (KHÔNG bao gồm EmployeeCode)
-        EmployeeValidator.Validate(employee);
-
-        // 2️⃣ Sinh mã nhân viên
         employee.EmployeeCode = GenerateEmployeeCode();
 
-        // 3️⃣ Validate nghiệp vụ (code + trùng)
-        _businessValidator.ValidateForCreate(employee);
+        if (_unitOfWork.Employees.GetAll().Any(x => x.Email == employee.Email))
+            throw new Exception("Email đã tồn tại");
 
-        // 4️⃣ Lưu
         _unitOfWork.Employees.Add(employee);
         _unitOfWork.Save();
-    }
 
-    private string GenerateEmployeeCode()
-    {
-        // Lấy mã NV lớn nhất hiện tại (NV001, NV002, ...)
-        var lastCode = _unitOfWork.Employees.GetAll()
-            .Where(e => e.EmployeeCode.StartsWith("NV"))
-            .Select(e => e.EmployeeCode)
-            .OrderByDescending(code => code)
-            .FirstOrDefault();
+        // 🔑 LẤY ROLE EMPLOYEE TỪ DB
+        var roleEmployee = _unitOfWork.Roles
+            .GetAll()
+            .First(r => r.Name == "Employee");
 
-        int nextNumber = 1;
-
-        if (!string.IsNullOrEmpty(lastCode))
+        var user = new User
         {
-            // NV001 -> 1
-            var numberPart = lastCode.Substring(2);
-            int.TryParse(numberPart, out nextNumber);
-            nextNumber++;
-        }
+            Username = employee.EmployeeCode,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+            RoleId = roleEmployee.Id,   // ✅ ĐÚNG
+            EmployeeId = employee.Id
+        };
 
-        return $"NV{nextNumber.ToString("D3")}";
+        _unitOfWork.Users.Add(user);
+        _unitOfWork.Save();
     }
 
 
     public void Update(Employee employee)
     {
-        // 1️⃣ Validate dữ liệu người dùng
-        EmployeeValidator.Validate(employee);
-
-        // 2️⃣ Validate nghiệp vụ cho Update (email trùng, v.v.)
-        _businessValidator.ValidateForUpdate(employee);
-
         _unitOfWork.Employees.Update(employee);
         _unitOfWork.Save();
     }
 
     public void Delete(int id)
     {
-        var employee = _unitOfWork.Employees.GetById(id);
-        if (employee != null)
+        var emp = _unitOfWork.Employees.GetById(id);
+        if (emp == null) return;
+
+        _unitOfWork.Employees.Delete(emp);
+        _unitOfWork.Save();
+    }
+
+    private string GenerateEmployeeCode()
+    {
+        var lastCode = _unitOfWork.Employees.GetAll()
+            .Where(x => x.EmployeeCode.StartsWith("NV"))
+            .OrderByDescending(x => x.EmployeeCode)
+            .Select(x => x.EmployeeCode)
+            .FirstOrDefault();
+
+        int next = 1;
+        if (!string.IsNullOrEmpty(lastCode))
         {
-            _unitOfWork.Employees.Delete(employee);
-            _unitOfWork.Save();
+            int.TryParse(lastCode.Substring(2), out next);
+            next++;
         }
+
+        return $"NV{next:D3}";
     }
 }

@@ -3,7 +3,6 @@ using System.Linq;
 using System.Windows.Forms;
 using Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using Domain.Entities;
 
 namespace UI;
 
@@ -18,26 +17,35 @@ public partial class MainForm : Form
         _unitOfWork = unitOfWork;
 
         InitializeComponent();
+        MdiChildActivate += MainForm_MdiChildActivate;
 
-        // Thiết lập Form cha (MDI)
-        this.IsMdiContainer = true;
-
-        // Đăng ký sự kiện ẩn/hiện Dashboard khi mở form con
-        this.MdiChildActivate += MainForm_MdiChildActivate;
-
+        ApplyPermission();
         LoadDashboardStats();
     }
 
+    private void ApplyPermission()
+    {
+        var p = Session.Permissions;
+
+        menuEmployee.Visible = p.Contains("MENU_EMPLOYEE");
+        menuDepartment.Visible = p.Contains("MENU_DEPARTMENT");
+        menuPosition.Visible = p.Contains("MENU_POSITION");
+        menuTimesheet.Visible = p.Contains("MENU_TIMESHEET");
+        menuPayroll.Visible = p.Contains("MENU_PAYROLL");
+        menuRewardDiscipline.Visible = p.Contains("MENU_REWARD");
+        menuUser.Visible = p.Contains("MENU_USER");
+
+        menuHuman.Visible =
+            menuEmployee.Visible ||
+            menuRewardDiscipline.Visible;
+    }
+
+
+
     private void MainForm_MdiChildActivate(object? sender, EventArgs e)
     {
-        if (this.Controls.ContainsKey("grpStats"))
-        {
-            var grpStats = this.Controls["grpStats"];
-            // Nếu có Form con đang mở -> Ẩn Dashboard. Nếu không -> Hiện lại.
-            grpStats.Visible = (this.ActiveMdiChild == null);
-
-            if (grpStats.Visible) LoadDashboardStats();
-        }
+        grpStats.Visible = ActiveMdiChild == null;
+        if (grpStats.Visible) LoadDashboardStats();
     }
 
     private void LoadDashboardStats()
@@ -52,42 +60,46 @@ public partial class MainForm : Form
 
             var payslips = _unitOfWork.Payslips.GetAll()
                 .Where(x => x.Month == month && x.Year == year);
-            decimal totalSalary = payslips.Any() ? payslips.Sum(x => x.FinalSalary) : 0;
 
-            if (this.Controls.ContainsKey("grpStats"))
-            {
-                var grp = this.Controls["grpStats"];
-                grp.Controls["lblStatEmployee"].Text = $"👥 Nhân sự: {empCount}";
-                grp.Controls["lblStatDept"].Text = $"🏢 Phòng ban: {deptCount}";
-                grp.Controls["lblStatSalary"].Text = $"💰 Lương T{month}: {totalSalary:N0} đ";
-            }
+            decimal totalSalary = payslips.Any()
+                ? payslips.Sum(x => x.FinalSalary)
+                : 0;
+
+            lblStatEmployee.Text = $"👥 Nhân sự: {empCount}";
+            lblStatDept.Text = $"🏢 Phòng ban: {deptCount}";
+            lblStatSalary.Text = $"💰 Lương T{month}: {totalSalary:N0} đ";
         }
-        catch { /* Bỏ qua lỗi khi DB chưa sẵn sàng */ }
+        catch { }
     }
 
     private void SwitchForm<T>() where T : Form
     {
-        // Đóng form cũ
-        foreach (var child in this.MdiChildren) child.Close();
+        foreach (var child in MdiChildren)
+            child.Close();
 
-        // Mở form mới từ DI Container
-        var newForm = _serviceProvider.GetRequiredService<T>();
-        newForm.MdiParent = this;
-        newForm.Dock = DockStyle.Fill;
-        newForm.FormBorderStyle = FormBorderStyle.None;
-        newForm.Show();
+        // ❌ KHÔNG lấy form từ DI nữa
+        var form = (Form)Activator.CreateInstance(typeof(T), ResolveConstructorParams(typeof(T)))!;
+
+        form.MdiParent = this;
+        form.Dock = DockStyle.Fill;
+        form.FormBorderStyle = FormBorderStyle.None;
+        form.Show();
     }
-    private void menuRewardDiscipline_Click(object sender, EventArgs e)
+    private object[] ResolveConstructorParams(Type formType)
     {
-        SwitchForm<RewardDisciplineForm>();
+        var ctor = formType.GetConstructors().First();
+        return ctor.GetParameters()
+            .Select(p => _serviceProvider.GetRequiredService(p.ParameterType))
+            .ToArray();
     }
 
-    // --- Sự kiện Menu ---
     private void menuEmployee_Click(object sender, EventArgs e) => SwitchForm<EmployeeForm>();
     private void menuLaborContract_Click(object sender, EventArgs e) => SwitchForm<LaborContractForm>();
+    private void menuRewardDiscipline_Click(object sender, EventArgs e) => SwitchForm<RewardDisciplineForm>();
     private void menuDepartment_Click(object sender, EventArgs e) => SwitchForm<DepartmentForm>();
     private void menuPosition_Click(object sender, EventArgs e) => SwitchForm<PositionForm>();
     private void menuTimesheet_Click(object sender, EventArgs e) => SwitchForm<TimesheetForm>();
     private void menuPayroll_Click(object sender, EventArgs e) => SwitchForm<PayrollForm>();
+    private void menuUser_Click(object sender, EventArgs e) => SwitchForm<UserForm>();
     private void menuExit_Click(object sender, EventArgs e) => Close();
 }

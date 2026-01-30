@@ -2,7 +2,6 @@
 using Domain.Entities;
 using System;
 using System.Drawing;
-using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -44,6 +43,7 @@ public partial class TimesheetForm : Form
         }
 
         dgvCalendar.RowTemplate.Height = 60;
+        dgvCalendar.CellClick -= DgvCalendar_CellClick;
         dgvCalendar.CellClick += DgvCalendar_CellClick;
     }
 
@@ -129,7 +129,6 @@ public partial class TimesheetForm : Form
         }
     }
 
-
     private void DgvCalendar_CellClick(object? sender, DataGridViewCellEventArgs e)
     {
         if (e.RowIndex < 0 || e.ColumnIndex < 0)
@@ -148,9 +147,8 @@ public partial class TimesheetForm : Form
                 Trạng_thái = x.Status
             })
             .ToList();
-
-        dgvDetail.DataSource = list;
     }
+
     private void btnStatistic_Click(object sender, EventArgs e)
     {
         DateTime from = dtpFrom.Value.Date;
@@ -180,5 +178,4 @@ public partial class TimesheetForm : Form
         if (!data.Any())
             MessageBox.Show("Không có dữ liệu vi phạm trong khoảng đã chọn");
     }
-
 }
